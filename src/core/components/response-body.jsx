@@ -4,6 +4,7 @@ import formatXml from "xml-but-prettier"
 import toLower from "lodash/toLower"
 import { extractFileNameFromContentDispositionHeader } from "core/utils"
 import win from "core/window"
+import CopyToClipboard from "react-copy-to-clipboard"
 
 export default class ResponseBody extends React.PureComponent {
   state = {
@@ -99,19 +100,29 @@ export default class ResponseBody extends React.PureComponent {
         body = "can't parse JSON.  Raw result:\n\n" + content
       }
 
-      bodyEl = <HighlightCode downloadable fileName={`${downloadName}.json`} value={ body } />
+      bodyEl = <div>
+        <HighlightCode downloadable fileName={`${downloadName}.json`} value={body}/>
+        {this.getCopyButton(body)}
+      </div>
 
-      // XML
+
+    // XML
     } else if (/xml/i.test(contentType)) {
       body = formatXml(content, {
         textNodesOnSameLine: true,
         indentor: "  "
       })
-      bodyEl = <HighlightCode downloadable fileName={`${downloadName}.xml`} value={ body } />
+      bodyEl = <div>
+        <HighlightCode downloadable fileName={`${downloadName}.xml`} value={ body } />
+        {this.getCopyButton(body)}
+      </div>
 
       // HTML or Plain Text
     } else if (toLower(contentType) === "text/html" || /text\/plain/.test(contentType)) {
-      bodyEl = <HighlightCode downloadable fileName={`${downloadName}.html`} value={ content } />
+      bodyEl = <div>
+        <HighlightCode downloadable fileName={`${downloadName}.html`} value={ content } />
+        {this.getCopyButton(content)}
+      </div>
 
       // Image
     } else if (/^image\//i.test(contentType)) {
@@ -155,4 +166,14 @@ export default class ResponseBody extends React.PureComponent {
       </div>
     )
   }
+
+  getCopyButton(body) {
+    return <div className="highlight-code">
+      <CopyToClipboard className="copy-contents" text={body}
+                       onCopy={() => this.setState({copied: true})}>
+        <button>{this.state.copied ? "Copied" : "Copy"}</button>
+      </CopyToClipboard>
+    </div>
+  }
 }
+
